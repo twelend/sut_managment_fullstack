@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: diplom-db
+    environment:
+      - POSTGRES_DB=diplom_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - diplom-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: diplom-server
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./server:/app
+      - server_static:/app/static
+      - server_media:/app/media
+    environment:
+      - DJANGO_SETTINGS_MODULE=sutsite.settings
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - diplom-network
+
+  # client:
+  #   build:
+  #     context: ./client
+  #     dockerfile: Dockerfile
+  #   container_name: diplom-client
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - NODE_ENV=production
+  #     - SERVER_URL=http://server:8000
+  #   depends_on:
+  #     - server
+  #   restart: unless-stopped
+  #   networks:
+  #     - diplom-network
+
+networks:
+  diplom-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  server_static:
+  server_media:
+
