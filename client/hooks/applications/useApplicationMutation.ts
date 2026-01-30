@@ -29,9 +29,16 @@ export function useApplicationMutation(type: string) {
 
       return applicationsService.accept(url, body);
     },
-    onSuccess: (response: any) => {
+    onSuccess: () => {
       toast.success("Заявка успешно принята!");
       queryClient.invalidateQueries({ queryKey: ["applications"] });
+      if (type === "subject") {
+        queryClient.invalidateQueries({ queryKey: ["subjects"] });
+        queryClient.invalidateQueries({ queryKey: ["landing", "subjects"] });
+      } else if (type === "contest") {
+        queryClient.invalidateQueries({ queryKey: ["contests"] });
+        queryClient.invalidateQueries({ queryKey: ["landing", "contests"] });
+      }
     },
     onError: () => {
       toast.error("Ошибка принятия заявки!");

@@ -6,7 +6,7 @@ export interface LoginResponse {
   data: {
     data: {
       token: string;
-    }
+    };
   };
 }
 
@@ -54,7 +54,6 @@ export interface ApplicationsCounts {
   rejected: number;
 }
 
-// ✅ ответ API
 export interface ApplicationsApiResponse {
   counts: ApplicationsCounts;
   items: ApplicationItem[];
@@ -66,4 +65,9 @@ export interface RefbookTemplate {
   content: string;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface ITemplates {
+  title: string;
+  template: string;
 }

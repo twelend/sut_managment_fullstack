@@ -15,11 +15,11 @@ class ApplicationsService {
   public async get(endpoint: string): Promise<ApplicationsApiResponse> {
     const headers = this.getAuthHeaders();
 
-    const response = await api.get<ApplicationsApiResponse>(endpoint, {
+    const response = await api.get<{data: ApplicationsApiResponse}>(endpoint, {
       headers,
     });
 
-    return response;
+    return response.data;
   }
 
   public async accept(

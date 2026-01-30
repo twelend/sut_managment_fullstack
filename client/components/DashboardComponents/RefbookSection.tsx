@@ -18,14 +18,17 @@ import { Spinner } from "../ui/spinner";
 import { useRefbookQuery } from "@/hooks/refbook/useRefbookQuery";
 import { useRefbookMutation } from "@/hooks/refbook/useRefbookMutation";
 import { useRefbookDelete } from "@/hooks/refbook/useRefbookDelete";
-import { RefbookTemplate } from "@/types";
+import { ITemplates, RefbookTemplate } from "@/types";
+import { TextareaUpgraded } from "../TemplatesTextarea/TextareaUpgraded";
 
 export default function RefbookSection() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState<RefbookTemplate | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<RefbookTemplate | null>(
+    null
+  );
 
   const { data, isPending } = useRefbookQuery();
   const { createTemplate, isCreatingTemplate } = useRefbookMutation();
@@ -56,6 +59,29 @@ export default function RefbookSection() {
     setDeleteTarget(null);
   };
 
+  const templatesList: ITemplates[] = [
+    {
+      title: "Имя родителя",
+      template: "{parent_name}",
+    },
+    {
+      title: "Имя ребенка",
+      template: "{child_name}",
+    },
+    {
+      title: "Email",
+      template: "{email}",
+    },
+    {
+      title: "Возраст",
+      template: "{age}",
+    },
+    {
+      title: "Номер",
+      template: "{phone}",
+    },
+  ];
+
   return (
     <div className="p-8">
       <div className="mb-8 flex items-center justify-between">
@@ -80,7 +106,7 @@ export default function RefbookSection() {
         <div className="h-[500px] flex justify-center items-center">
           <Spinner style={{ width: "80px", height: "80px" }} />
         </div>
-      ) : templates.length > 0 ? (
+      ) : templates && templates.length > 0 ? (
         <div className="grid gap-4">
           {templates.map((template) => (
             <Card
@@ -96,7 +122,10 @@ export default function RefbookSection() {
                       </h3>
                       {(template.updated_at || template.created_at) && (
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {template.updated_at || template.created_at}
+                          {(template.updated_at &&
+                            template.updated_at.split("T")) ||
+                            (template.created_at &&
+                              template.created_at.split("T")[0])}
                         </span>
                       )}
                     </div>
@@ -153,19 +182,23 @@ export default function RefbookSection() {
                 onChange={(e) => setNewTitle(e.target.value)}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="template-content">Текст шаблона</Label>
-              <Textarea
-                id="template-content"
-                placeholder="Введите сообщение..."
-                value={newContent}
-                onChange={(e) => setNewContent(e.target.value)}
-                rows={6}
-              />
-            </div>
+            <TextareaUpgraded
+              label="Текст шаблона"
+              content={newContent}
+              setContent={setNewContent}
+              name="template-content"
+              templates={templatesList}
+            />
           </div>
           <div className="flex justify-end gap-4 mt-6">
-            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setNewContent("");
+                setNewTitle("");
+                setCreateDialogOpen(false);
+              }}
+            >
               Отмена
             </Button>
             <Button
@@ -189,7 +222,10 @@ export default function RefbookSection() {
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-4 mt-6">
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
               Отмена
             </Button>
             <Button

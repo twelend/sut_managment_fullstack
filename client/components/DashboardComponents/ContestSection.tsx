@@ -92,7 +92,7 @@ export default function ContestSection() {
             <Spinner style={{ width: "80px", height: "80px" }} />
           </div>
         ) : Array.isArray(data?.data) ? (
-          data.data.map((competition) => (
+          data?.data.map((competition) => (
             <Card
               key={competition.id}
               className="hover:border-primary/50 transition-colors"

@@ -37,6 +37,18 @@ class SubjectService {
     });
   }
 
+  public async update(id: number, body: Partial<TypeSubjectSchema>) {
+    const headers = this.getAuthHeaders();
+
+    return api.patch<TypeSubjectSchema>(
+      `/api/teacher/subjects/update/${id}/`,
+      body,
+      {
+        headers,
+      }
+    );
+  }
+
   public async delete(id: number) {
     const headers = this.getAuthHeaders();
     return api.delete(`/api/teacher/subjects/${id}/`, {

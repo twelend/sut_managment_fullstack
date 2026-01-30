@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   db:
@@ -32,6 +32,8 @@ services:
       - ./server:/app
       - server_static:/app/static
       - server_media:/app/media
+    env_file:
+      - ./server/.env
     environment:
       - DJANGO_SETTINGS_MODULE=sutsite.settings
       - PYTHONUNBUFFERED=1
@@ -66,4 +68,3 @@ volumes:
   postgres_data:
   server_static:
   server_media:
-

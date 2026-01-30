@@ -21,10 +21,23 @@ import {
   CheckCircle,
 } from "lucide-react";
 
-import { ApplicationItem, ContestApiResponse, SubjectApiResponse } from "@/types";
+import {
+  ApplicationItem,
+  ContestApiResponse,
+  SubjectApiResponse,
+} from "@/types";
 import { useApplicationsContestQuery } from "@/hooks/applications/useApplicationsQuery";
 import { Spinner } from "../ui/spinner";
 import { useApplicationMutation } from "@/hooks/applications/useApplicationMutation";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { useRefbookQuery } from "@/hooks/refbook/useRefbookQuery";
+import { applyTemplate } from "../TemplatesTextarea/applyTemplate";
 
 interface ApplicationsViewProps {
   course?: SubjectApiResponse;
@@ -57,14 +70,23 @@ export default function ApplicationsView({
   const type = !course ? "contest" : "subject";
 
   const { applicationsItems, isLoadingApplications } =
-    useApplicationsContestQuery(competition?.id ?? 0, filterStatus, type);
+    useApplicationsContestQuery(
+      competition?.id || course?.id || 0,
+      filterStatus,
+      type
+    );
 
-  const applications = applicationsItems?.data.items ?? [];
-  const counts = applicationsItems?.data.counts;
+  const applications = applicationsItems?.items ?? [];
+  console.log(applicationsItems);
+  const counts = applicationsItems?.counts;
+
+  const { data, isPending } = useRefbookQuery();
+
+  const templates = Array.isArray(data?.data) ? data?.data : [];
 
   const { acceptApplication, isLoadingAccept } = useApplicationMutation(type);
 
-  console.log(selectedApplication?.id)
+  console.log(selectedApplication?.id);
 
   const handleActionClick = (
     app: ApplicationItem,
@@ -77,30 +99,30 @@ export default function ApplicationsView({
     setDialogOpen(true);
   };
 
-const handleConfirmAction = async () => {
-  if (selectedApplication && message.trim()) {
-    setIsSending(true);
-    setSendingStatus("loading");
+  const handleConfirmAction = async () => {
+    if (selectedApplication && message.trim()) {
+      setIsSending(true);
+      setSendingStatus("loading");
 
-    try {
-      await acceptApplication({ 
-        id: selectedApplication.id, 
-        action: dialogAction, 
-        message 
-      }); 
+      try {
+        await acceptApplication({
+          id: selectedApplication.id,
+          action: dialogAction,
+          message,
+        });
 
-      setSendingStatus("success");
-      setDialogOpen(false);
-      setSelectedApplication(null);
-      setMessage("");
-      setIsSending(false);
-    } catch (error) {
-      console.error("Error sending email:", error);
-      setSendingStatus("error");
-      setIsSending(false);
+        setSendingStatus("success");
+        setDialogOpen(false);
+        setSelectedApplication(null);
+        setMessage("");
+        setIsSending(false);
+      } catch (error) {
+        console.error("Error sending email:", error);
+        setSendingStatus("error");
+        setIsSending(false);
+      }
     }
-  }
-};
+  };
 
   return (
     <div className="p-8">
@@ -142,7 +164,7 @@ const handleConfirmAction = async () => {
       ) : (
         <div className="space-y-3">
           {applications.length > 0 ? (
-            applications.map((app) => (
+            applications.map((app: any) => (
               <Card
                 key={app.id}
                 className="hover:border-primary/50 transition-colors"
@@ -233,6 +255,37 @@ const handleConfirmAction = async () => {
           </DialogHeader>
 
           <div className="space-y-4">
+            <div className="">
+              <Select
+                onValueChange={(templateId) => {
+                  const template = templates?.find(
+                    (t) => t.id === Number(templateId)
+                  );
+
+                  if (!template) return;
+
+                  const text = applyTemplate(
+                    template.content,
+                    selectedApplication
+                  );
+
+                  setMessage(text);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите шаблон" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {templates &&
+                    templates.map((item) => (
+                      <SelectItem key={item.id} value={String(item.id)}>
+                        {item.title}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <label className="text-sm font-medium mb-2 block">
                 Текст письма ({selectedApplication?.email})

@@ -24,3 +24,30 @@ export function useSubjectMutation() {
   return { createSubject, isCreatingSubject };
 }
 
+export function useSubjectUpdate() {
+  const queryClient = useQueryClient();
+  const { mutateAsync: updateSubject, isPending: isUpdatingSubject } =
+    useMutation({
+      mutationKey: ["update_subject"],
+      mutationFn: ({
+        id,
+        values,
+      }: {
+        id: number;
+        values: Partial<TypeSubjectSchema>;
+      }) => {
+        return subjectService.update(id, values);
+      },
+      onSuccess: () => {
+        toast.success("Занятие успешно обновлено!");
+        queryClient.invalidateQueries({ queryKey: ["subjects"] });
+      },
+      onError: (error) => {
+        console.error("Ошибка обновления занятия:", error);
+        toast.error("Не удалось обновить занятие, попробуйте позже.");
+      },
+    });
+
+  return { updateSubject, isUpdatingSubject };
+}
+

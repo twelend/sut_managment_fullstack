@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Subject, Contest, LessonApplication, ContestApplication, ApplicationStatus, RefbookTemplate, SubjectStatus
+from .service.telegram_notify import send_telegram_message
 
 class SubjectSerializer(serializers.ModelSerializer):
     newApplications = serializers.SerializerMethodField()
@@ -37,17 +38,21 @@ class SubjectCreateSerializer(serializers.ModelSerializer):
 
 class ContestSerializer(serializers.ModelSerializer):
     newApplications = serializers.SerializerMethodField()
+    acceptedAplications = serializers.SerializerMethodField()
     totalApplications = serializers.SerializerMethodField()
 
     class Meta:
         model = Contest
-        fields = ['id', 'title', 'description', 'is_active', 'newApplications', "totalApplications"]
+        fields = ['id', 'title', 'description', 'is_active', 'newApplications', 'acceptedAplications', "totalApplications"]
 
     def get_totalApplications(self, obj):
         return obj.applications.count()
 
     def get_newApplications(self, obj):
         return obj.applications.filter(status=ApplicationStatus.NEW).count()
+
+    def get_acceptedAplications(self, obj):
+        return obj.applications.filter(status=ApplicationStatus.ACCEPTED).count()
 
 class ContestCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -71,6 +76,23 @@ class LessonApplicationCreateSerializer(serializers.ModelSerializer):
             "message",
         ]
 
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        subject_title = instance.subject.title
+        text = (
+            "‼️ Новая заявка на занятие ‼️\n"
+            f"Курс: {subject_title}\n"
+            f"Ребёнок: {instance.child_name or '—'}\n"
+            f"Родитель: {instance.parent_name or '—'}\n"
+            f"Email: {instance.email}\n"
+            f"Телефон: {instance.phone or '—'}\n"
+            f"Возраст: {instance.age or '—'}\n"
+            f"Сообщение: {instance.message or '—'}"
+        )
+        send_telegram_message(text)
+        return instance
+
+
 class ContestApplicationCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContestApplication
@@ -84,6 +106,22 @@ class ContestApplicationCreateSerializer(serializers.ModelSerializer):
             "age",
             "message",
         ]
+
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        contest_title = instance.contest.title
+        text = (
+            "‼️ Новая заявка на конкурс ‼️\n"
+            f"Конкурс: {contest_title}\n"
+            f"Ребёнок: {instance.child_name or '—'}\n"
+            f"Родитель: {instance.parent_name or '—'}\n"
+            f"Email: {instance.email}\n"
+            f"Телефон: {instance.phone or '—'}\n"
+            f"Возраст: {instance.age or '—'}\n"
+            f"Сообщение: {instance.message or '—'}"
+        )
+        send_telegram_message(text)
+        return instance
 
 class ApplicationSerializer(serializers.ModelSerializer):
     appliedAt = serializers.SerializerMethodField()
